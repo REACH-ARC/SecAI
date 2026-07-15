@@ -28,6 +28,8 @@ public class TrivyProvider implements ScannerProvider {
             // Run trivy command: trivy fs --format json --output trivy-results.json <projectPath>
             ProcessBuilder pb = new ProcessBuilder("trivy", "fs", "--format", "json", "--output", outputFile.getAbsolutePath(), projectPath);
             pb.directory(new File(projectPath));
+            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
             Process process = pb.start();
             
             int exitCode = process.waitFor();
@@ -80,7 +82,8 @@ public class TrivyProvider implements ScannerProvider {
         System.out.println("Trivy: Updating vulnerability database...");
         try {
             Process process = new ProcessBuilder("trivy", "image", "--download-db-only")
-                    .redirectErrorStream(true)
+                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
             process.waitFor();
             System.out.println("Trivy: Database update complete.");
@@ -97,7 +100,10 @@ public class TrivyProvider implements ScannerProvider {
     @Override
     public boolean isAvailable() {
         try {
-            Process process = new ProcessBuilder("trivy", "--version").start();
+            ProcessBuilder pb = new ProcessBuilder("trivy", "--version");
+            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
+            Process process = pb.start();
             int exitCode = process.waitFor();
             return exitCode == 0;
         } catch (IOException e) {

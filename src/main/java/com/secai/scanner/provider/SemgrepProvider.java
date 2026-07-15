@@ -28,6 +28,8 @@ public class SemgrepProvider implements ScannerProvider {
             // Run semgrep command: semgrep scan --json -o semgrep-results.json <projectPath>
             ProcessBuilder pb = new ProcessBuilder("semgrep", "scan", "--json", "-o", outputFile.getAbsolutePath(), projectPath);
             pb.directory(new File(projectPath));
+            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
             Process process = pb.start();
             
             // Wait for completion (might take time depending on project size)
@@ -83,7 +85,8 @@ public class SemgrepProvider implements ScannerProvider {
         System.out.println("Semgrep: Rules are fetched dynamically during scan from the Semgrep Registry.");
         try {
             Process process = new ProcessBuilder("semgrep", "--version")
-                    .redirectErrorStream(true)
+                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
             process.waitFor();
             System.out.println("Semgrep: Ready.");
@@ -100,7 +103,10 @@ public class SemgrepProvider implements ScannerProvider {
     @Override
     public boolean isAvailable() {
         try {
-            Process process = new ProcessBuilder("semgrep", "--version").start();
+            ProcessBuilder pb = new ProcessBuilder("semgrep", "--version");
+            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
+            Process process = pb.start();
             int exitCode = process.waitFor();
             return exitCode == 0;
         } catch (IOException e) {
