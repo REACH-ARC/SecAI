@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.secai.config.AppConfig;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,17 +18,20 @@ public class AIEngine {
     private static final Logger logger = LoggerFactory.getLogger(AIEngine.class);
     private final List<AIProvider> providers;
     private final AppConfig appConfig;
-    private final SecAiCommand secAiCommand;
+    private final ObjectProvider<SecAiCommand> secAiCommandProvider;
 
     @Autowired
-    public AIEngine(AppConfig appConfig, List<AIProvider> providers, @Lazy SecAiCommand secAiCommand) {
+    public AIEngine(AppConfig appConfig, List<AIProvider> providers, ObjectProvider<SecAiCommand> secAiCommandProvider) {
         this.appConfig = appConfig;
         this.providers = providers;
-        this.secAiCommand = secAiCommand;
+        this.secAiCommandProvider = secAiCommandProvider;
     }
     
     private AIProvider getActiveProvider() {
-        String configuredProvider = secAiCommand.getAiProvider() != null ? secAiCommand.getAiProvider() : appConfig.getProvider();
+        SecAiCommand secAiCommand = secAiCommandProvider.getIfAvailable();
+        String configuredProvider = (secAiCommand != null && secAiCommand.getAiProvider() != null) 
+                                        ? secAiCommand.getAiProvider() 
+                                        : appConfig.getProvider();
         AIProvider activeProvider = null;
         
         if (configuredProvider != null) {
@@ -50,7 +53,7 @@ public class AIEngine {
         }
         
         // Pass CLI overrides to the provider if it supports it
-        if (activeProvider != null) {
+        if (activeProvider != null && secAiCommand != null) {
             if (secAiCommand.getAiApiKey() != null || secAiCommand.getAiModel() != null || secAiCommand.getAiUrl() != null) {
                 activeProvider.applyOverride(secAiCommand.getAiApiKey(), secAiCommand.getAiModel(), secAiCommand.getAiUrl());
             }

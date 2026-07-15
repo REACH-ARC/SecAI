@@ -25,8 +25,8 @@ public class ConfigLoader {
     public AppConfig loadConfig(File configFile) {
         AppConfig config = new AppConfig();
         
-        // 1. Load from YAML file if exists
-        if (configFile.exists()) {
+        // 1. Load from YAML file if exists and not empty
+        if (configFile.exists() && configFile.length() > 0) {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             try {
                 config = mapper.readValue(configFile, AppConfig.class);
