@@ -33,7 +33,9 @@ public class TrivyProvider implements ScannerProvider {
             int exitCode = process.waitFor();
             
             if (outputFile.exists()) {
-                JsonNode rootNode = mapper.readTree(outputFile);
+                // Read file using default charset to avoid UTF-8 parse errors on Windows
+                String jsonContent = java.nio.file.Files.readString(outputFile.toPath(), java.nio.charset.Charset.defaultCharset());
+                JsonNode rootNode = mapper.readTree(jsonContent);
                 JsonNode results = rootNode.path("Results");
                 
                 if (results.isArray()) {
