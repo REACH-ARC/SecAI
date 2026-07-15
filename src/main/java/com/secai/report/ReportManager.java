@@ -15,7 +15,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
+import com.secai.model.Report;
+import com.secai.model.ChatMessage;
+
 @Service
+@RegisterReflectionForBinding({Finding.class, Report.class, ChatMessage.class})
 public class ReportManager {
     private static final Logger logger = LoggerFactory.getLogger(ReportManager.class);
     private static final String STATE_DIR = ".secai";
