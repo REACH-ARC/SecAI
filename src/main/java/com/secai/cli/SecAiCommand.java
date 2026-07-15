@@ -27,7 +27,19 @@ import java.util.concurrent.Callable;
 public class SecAiCommand implements Callable<Integer> {
 
     @Option(names = {"-v", "--verbose"}, description = "Enable verbose output")
-    boolean verbose;
+    public boolean verbose;
+
+    @Option(names = {"--ai-provider"}, description = "AI provider to use (gemini, openai, ollama)", scope = CommandLine.ScopeType.INHERIT)
+    public String aiProvider;
+
+    @Option(names = {"--ai-api-key"}, description = "API key for the chosen AI provider", scope = CommandLine.ScopeType.INHERIT)
+    public String aiApiKey;
+
+    @Option(names = {"--ai-model"}, description = "Model to use for the AI provider", scope = CommandLine.ScopeType.INHERIT)
+    public String aiModel;
+
+    @Option(names = {"--ai-url"}, description = "URL for the AI provider (e.g., for Ollama)", scope = CommandLine.ScopeType.INHERIT)
+    public String aiUrl;
 
     @Override
     public Integer call() {

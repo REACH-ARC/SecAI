@@ -18,12 +18,16 @@ import java.time.Duration;
 @Component
 public class OllamaProvider implements AIProvider {
     private static final Logger logger = LoggerFactory.getLogger(OllamaProvider.class);
-    private final AppConfig.OllamaConfig config;
+    private String url;
+    private String model;
     private final HttpClient httpClient;
     private final ObjectMapper mapper;
 
     public OllamaProvider(AppConfig appConfig) {
-        this.config = appConfig.getOllama();
+        if (appConfig.getOllama() != null) {
+            this.url = appConfig.getOllama().getUrl();
+            this.model = appConfig.getOllama().getModel();
+        }
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
@@ -31,8 +35,18 @@ public class OllamaProvider implements AIProvider {
     }
 
     @Override
+    public void applyOverride(String apiKey, String model, String url) {
+        if (url != null && !url.isEmpty()) {
+            this.url = url;
+        }
+        if (model != null && !model.isEmpty()) {
+            this.model = model;
+        }
+    }
+
+    @Override
     public Finding analyzeFinding(Finding finding) {
-        if (config == null || config.getUrl() == null || config.getUrl().isEmpty()) {
+        if (url == null || url.isEmpty()) {
             logger.warn("Ollama URL not configured. Skipping analysis for {}", finding.getId());
             return finding;
         }
@@ -49,6 +63,7 @@ public class OllamaProvider implements AIProvider {
                 "Severity: " + finding.getSeverity();
 
         try {
+            String activeModel = model != null ? model : "llama3";
             String requestBody = """
                 {
                     "model": "%s",
@@ -60,14 +75,14 @@ public class OllamaProvider implements AIProvider {
                     ]
                 }
                 """.formatted(
-                    config.getModel() != null ? config.getModel() : "llama3",
+                    activeModel,
                     mapper.writeValueAsString(systemPrompt),
                     mapper.writeValueAsString(userPrompt)
                 );
 
-            String url = config.getUrl().endsWith("/") ? config.getUrl() + "api/chat" : config.getUrl() + "/api/chat";
+            String requestUrl = url.endsWith("/") ? url + "api/chat" : url + "/api/chat";
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(URI.create(requestUrl))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
@@ -96,7 +111,7 @@ public class OllamaProvider implements AIProvider {
 
     @Override
     public String chat(java.util.List<com.secai.model.ChatMessage> history) {
-        if (config == null || config.getUrl() == null || config.getUrl().isEmpty()) {
+        if (url == null || url.isEmpty()) {
             return "Error: Ollama URL not configured.";
         }
         
@@ -112,6 +127,7 @@ public class OllamaProvider implements AIProvider {
             }
             messagesJson.append("]");
 
+            String activeModel = model != null ? model : "llama3";
             String requestBody = """
                 {
                     "model": "%s",
@@ -119,13 +135,13 @@ public class OllamaProvider implements AIProvider {
                     "messages": %s
                 }
                 """.formatted(
-                    config.getModel() != null ? config.getModel() : "llama3",
+                    activeModel,
                     messagesJson.toString()
                 );
 
-            String url = config.getUrl().endsWith("/") ? config.getUrl() + "api/chat" : config.getUrl() + "/api/chat";
+            String requestUrl = url.endsWith("/") ? url + "api/chat" : url + "/api/chat";
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(URI.create(requestUrl))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();

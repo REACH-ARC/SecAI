@@ -18,12 +18,16 @@ import java.time.Duration;
 @Component
 public class GeminiProvider implements AIProvider {
     private static final Logger logger = LoggerFactory.getLogger(GeminiProvider.class);
-    private final AppConfig.GoogleConfig config;
+    private String apiKey;
+    private String model;
     private final HttpClient httpClient;
     private final ObjectMapper mapper;
 
     public GeminiProvider(AppConfig appConfig) {
-        this.config = appConfig.getGoogle();
+        if (appConfig.getGoogle() != null) {
+            this.apiKey = appConfig.getGoogle().getApiKey();
+            this.model = appConfig.getGoogle().getModel();
+        }
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
@@ -31,8 +35,18 @@ public class GeminiProvider implements AIProvider {
     }
 
     @Override
+    public void applyOverride(String apiKey, String model, String url) {
+        if (apiKey != null && !apiKey.isEmpty()) {
+            this.apiKey = apiKey;
+        }
+        if (model != null && !model.isEmpty()) {
+            this.model = model;
+        }
+    }
+
+    @Override
     public Finding analyzeFinding(Finding finding) {
-        if (config == null || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+        if (apiKey == null || apiKey.isEmpty()) {
             logger.warn("Google API key not configured. Skipping analysis for {}", finding.getId());
             return finding;
         }
@@ -49,7 +63,7 @@ public class GeminiProvider implements AIProvider {
                 "Severity: " + finding.getSeverity();
 
         try {
-            String model = config.getModel() != null ? config.getModel() : "gemini-1.5-pro-latest";
+            String activeModel = model != null ? model : "gemini-1.5-pro-latest";
             
             String requestBody = """
                 {
@@ -68,7 +82,7 @@ public class GeminiProvider implements AIProvider {
                     mapper.writeValueAsString(userPrompt)
                 );
 
-            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + config.getApiKey();
+            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + activeModel + ":generateContent?key=" + apiKey;
             
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -100,12 +114,12 @@ public class GeminiProvider implements AIProvider {
 
     @Override
     public String chat(java.util.List<com.secai.model.ChatMessage> history) {
-        if (config == null || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+        if (apiKey == null || apiKey.isEmpty()) {
             return "Error: Google API key not configured.";
         }
         
         try {
-            String model = config.getModel() != null ? config.getModel() : "gemini-1.5-pro-latest";
+            String activeModel = model != null ? model : "gemini-1.5-pro-latest";
             
             StringBuilder systemParts = new StringBuilder();
             StringBuilder contentsJson = new StringBuilder("[");
@@ -135,7 +149,7 @@ public class GeminiProvider implements AIProvider {
             }
             requestBodyBuilder.append("\"contents\": ").append(contentsJson.toString()).append("}");
 
-            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + config.getApiKey();
+            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + activeModel + ":generateContent?key=" + apiKey;
             
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))

@@ -2,11 +2,13 @@ package com.secai.ai;
 
 import com.secai.model.Finding;
 import com.secai.model.ChatMessage;
+import com.secai.cli.SecAiCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.secai.config.AppConfig;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,26 +16,51 @@ import java.util.List;
 @Service
 public class AIEngine {
     private static final Logger logger = LoggerFactory.getLogger(AIEngine.class);
-    private AIProvider activeProvider;
+    private final List<AIProvider> providers;
+    private final AppConfig appConfig;
+    private final SecAiCommand secAiCommand;
 
     @Autowired
-    public AIEngine(AppConfig appConfig, List<AIProvider> providers) {
-        String configuredProvider = appConfig.getProvider();
+    public AIEngine(AppConfig appConfig, List<AIProvider> providers, @Lazy SecAiCommand secAiCommand) {
+        this.appConfig = appConfig;
+        this.providers = providers;
+        this.secAiCommand = secAiCommand;
+    }
+    
+    private AIProvider getActiveProvider() {
+        String configuredProvider = secAiCommand.aiProvider != null ? secAiCommand.aiProvider : appConfig.getProvider();
+        AIProvider activeProvider = null;
+        
         if (configuredProvider != null) {
             for (AIProvider provider : providers) {
                 if (provider.getName().equalsIgnoreCase(configuredProvider)) {
-                    this.activeProvider = provider;
+                    activeProvider = provider;
                     break;
                 }
             }
         }
-        if (this.activeProvider == null && !providers.isEmpty()) {
-            this.activeProvider = providers.get(0); // fallback
-            logger.warn("Configured AI provider '{}' not found. Falling back to {}.", configuredProvider, activeProvider.getName());
+        
+        if (activeProvider == null && !providers.isEmpty()) {
+            activeProvider = providers.get(0); // fallback
+            if (configuredProvider != null) {
+                logger.warn("Configured AI provider '{}' not found. Falling back to {}.", configuredProvider, activeProvider.getName());
+            } else {
+                logger.debug("No AI provider configured. Defaulting to {}.", activeProvider.getName());
+            }
         }
+        
+        // Pass CLI overrides to the provider if it supports it
+        if (activeProvider != null) {
+            if (secAiCommand.aiApiKey != null || secAiCommand.aiModel != null || secAiCommand.aiUrl != null) {
+                activeProvider.applyOverride(secAiCommand.aiApiKey, secAiCommand.aiModel, secAiCommand.aiUrl);
+            }
+        }
+        
+        return activeProvider;
     }
 
     public void analyzeFindings(List<Finding> findings) {
+        AIProvider activeProvider = getActiveProvider();
         if (activeProvider == null) {
             logger.warn("No AI provider configured. Skipping AI analysis.");
             return;
@@ -51,6 +78,7 @@ public class AIEngine {
     }
 
     public String chat(List<ChatMessage> history) {
+        AIProvider activeProvider = getActiveProvider();
         if (activeProvider == null) {
             return "Error: No AI provider configured.";
         }

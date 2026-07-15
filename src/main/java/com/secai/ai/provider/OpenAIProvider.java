@@ -18,12 +18,16 @@ import java.time.Duration;
 @Component
 public class OpenAIProvider implements AIProvider {
     private static final Logger logger = LoggerFactory.getLogger(OpenAIProvider.class);
-    private final AppConfig.OpenAIConfig config;
+    private String apiKey;
+    private String model;
     private final HttpClient httpClient;
     private final ObjectMapper mapper;
 
     public OpenAIProvider(AppConfig appConfig) {
-        this.config = appConfig.getOpenai();
+        if (appConfig.getOpenai() != null) {
+            this.apiKey = appConfig.getOpenai().getApiKey();
+            this.model = appConfig.getOpenai().getModel();
+        }
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
@@ -31,8 +35,18 @@ public class OpenAIProvider implements AIProvider {
     }
 
     @Override
+    public void applyOverride(String apiKey, String model, String url) {
+        if (apiKey != null && !apiKey.isEmpty()) {
+            this.apiKey = apiKey;
+        }
+        if (model != null && !model.isEmpty()) {
+            this.model = model;
+        }
+    }
+
+    @Override
     public Finding analyzeFinding(Finding finding) {
-        if (config == null || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+        if (apiKey == null || apiKey.isEmpty()) {
             logger.warn("OpenAI API key not configured. Skipping analysis for {}", finding.getId());
             return finding;
         }
@@ -49,6 +63,7 @@ public class OpenAIProvider implements AIProvider {
                 "Severity: " + finding.getSeverity();
 
         try {
+            String activeModel = model != null ? model : "gpt-4-turbo-preview";
             String requestBody = """
                 {
                     "model": "%s",
@@ -59,7 +74,7 @@ public class OpenAIProvider implements AIProvider {
                     ]
                 }
                 """.formatted(
-                    config.getModel() != null ? config.getModel() : "gpt-4-turbo-preview",
+                    activeModel,
                     mapper.writeValueAsString(systemPrompt),
                     mapper.writeValueAsString(userPrompt)
                 );
@@ -67,7 +82,7 @@ public class OpenAIProvider implements AIProvider {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://api.openai.com/v1/chat/completions"))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + config.getApiKey())
+                    .header("Authorization", "Bearer " + apiKey)
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
 
@@ -95,7 +110,7 @@ public class OpenAIProvider implements AIProvider {
 
     @Override
     public String chat(java.util.List<com.secai.model.ChatMessage> history) {
-        if (config == null || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+        if (apiKey == null || apiKey.isEmpty()) {
             return "Error: OpenAI API key not configured.";
         }
         
@@ -111,20 +126,21 @@ public class OpenAIProvider implements AIProvider {
             }
             messagesJson.append("]");
 
+            String activeModel = model != null ? model : "gpt-4-turbo-preview";
             String requestBody = """
                 {
                     "model": "%s",
                     "messages": %s
                 }
                 """.formatted(
-                    config.getModel() != null ? config.getModel() : "gpt-4-turbo-preview",
+                    activeModel,
                     messagesJson.toString()
                 );
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://api.openai.com/v1/chat/completions"))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + config.getApiKey())
+                    .header("Authorization", "Bearer " + apiKey)
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
 

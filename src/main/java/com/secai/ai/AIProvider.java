@@ -23,4 +23,14 @@ public interface AIProvider {
      * Returns the name of the AI provider.
      */
     String getName();
+
+    /**
+     * Applies configuration overrides from CLI arguments.
+     * @param apiKey The API key override, or null.
+     * @param model The model override, or null.
+     * @param url The url override, or null.
+     */
+    default void applyOverride(String apiKey, String model, String url) {
+        // Optional operation, default is no-op
+    }
 }

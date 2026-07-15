@@ -7,11 +7,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
+import org.springframework.boot.ExitCodeGenerator;
+
 @SpringBootApplication
-public class SecaiApplication implements CommandLineRunner {
+public class SecaiApplication implements CommandLineRunner, ExitCodeGenerator {
 
     private final SecAiCommand secAiCommand;
     private final IFactory factory;
+    private int exitCode;
 
     public SecaiApplication(SecAiCommand secAiCommand, IFactory factory) {
         this.secAiCommand = secAiCommand;
@@ -19,16 +22,16 @@ public class SecaiApplication implements CommandLineRunner {
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(SecaiApplication.class, args);
+        System.exit(SpringApplication.exit(SpringApplication.run(SecaiApplication.class, args)));
     }
 
     @Override
     public void run(String... args) {
-        int exitCode = new CommandLine(secAiCommand, factory).execute(args);
-        // Only exit if we are not testing or if it's the intended behavior.
-        // For a pure CLI, system exit is fine.
-        if (exitCode != 0) {
-            System.exit(exitCode);
-        }
+        exitCode = new CommandLine(secAiCommand, factory).execute(args);
+    }
+
+    @Override
+    public int getExitCode() {
+        return exitCode;
     }
 }
