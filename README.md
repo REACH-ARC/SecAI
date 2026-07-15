@@ -25,7 +25,7 @@ irm https://raw.githubusercontent.com/REACH-ARC/SecAI/main/install.ps1 | iex
 
 ### Prerequisites (for scanners)
 While SecAI doesn't require Java, it does depend on the underlying scanners being installed in your system PATH:
-- [Semgrep](https://semgrep.dev/)
+- [Semgrep](https://semgrep.dev/) *(Note: For Windows, you can install via WSL or Python `pip install semgrep`. If unavailable, SecAI will gracefully skip it and rely on Trivy!)*
 - [Trivy](https://trivy.dev/)
 
 ## Getting Started
