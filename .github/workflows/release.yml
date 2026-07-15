@@ -35,7 +35,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Native Image
-        run: ./mvnw -Pnative native:compile -DskipTests
+        run: mvn -Pnative native:compile -DskipTests
         shell: bash
 
       - name: Rename Binary
