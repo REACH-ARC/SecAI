@@ -3,7 +3,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$Repo = "<YOUR_GITHUB_USERNAME>/secai"
+$Repo = "REACH-ARC/SecAI"
 $BinaryName = "secai.exe"
 $InstallDir = "$env:USERPROFILE\secai\bin"
 

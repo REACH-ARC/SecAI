@@ -15,15 +15,13 @@ SecAI distributes pre-compiled native binaries so you don't even need Java insta
 
 **Linux & macOS:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/<YOUR_GITHUB_USERNAME>/secai/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/REACH-ARC/SecAI/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/<YOUR_GITHUB_USERNAME>/secai/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/REACH-ARC/SecAI/main/install.ps1 | iex
 ```
-
-> **Note:** Make sure to replace `<YOUR_GITHUB_USERNAME>` with your actual GitHub handle once you push the repository!
 
 ### Prerequisites (for scanners)
 While SecAI doesn't require Java, it does depend on the underlying scanners being installed in your system PATH:
@@ -35,16 +33,24 @@ While SecAI doesn't require Java, it does depend on the underlying scanners bein
 ### 1. Configuration
 SecAI uses a `secai-config.yaml` file in the root of your target project.
 ```yaml
-ai:
-  provider: openai # 'openai', 'gemini', or 'ollama'
-  apiKey: "YOUR_API_KEY" # Not needed for Ollama
-  model: "gpt-4-turbo"   # 'gemini-1.5-pro-latest', 'llama3'
-  url: "http://localhost:11434" # Only used for Ollama
+provider: openai
+openai:
+  apiKey: "YOUR_API_KEY"
+  model: "gpt-4-turbo"
+# gemini:
+#   apiKey: "YOUR_API_KEY"
+# ollama:
+#   url: "http://localhost:11434"
 ```
 
 ### 3. Usage
 
 Run SecAI from your terminal:
+
+**Configure AI Provider:**
+```bash
+secai config --provider openai --api-key "YOUR_KEY" --model "gpt-4-turbo"
+```
 
 **Scan a project:**
 ```bash
