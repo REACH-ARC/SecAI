@@ -62,8 +62,10 @@ public class TrivyProvider implements ScannerProvider {
             } else {
                 logger.warn("Trivy finished with exit code {} but no output file was found.", exitCode);
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             logger.error("Error executing Trivy: {}", e.getMessage());
+        } catch (InterruptedException e) {
+            logger.error("Trivy execution interrupted: {}", e.getMessage());
             Thread.currentThread().interrupt();
         }
 
@@ -95,7 +97,9 @@ public class TrivyProvider implements ScannerProvider {
             Process process = new ProcessBuilder("trivy", "--version").start();
             int exitCode = process.waitFor();
             return exitCode == 0;
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
+            return false;
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return false;
         }
