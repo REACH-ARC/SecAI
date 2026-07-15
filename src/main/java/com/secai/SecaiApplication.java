@@ -22,7 +22,10 @@ public class SecaiApplication implements CommandLineRunner, ExitCodeGenerator {
     }
 
     public static void main(String[] args) {
-        System.exit(SpringApplication.exit(SpringApplication.run(SecaiApplication.class, args)));
+        SpringApplication app = new SpringApplication(SecaiApplication.class);
+        app.setBannerMode(org.springframework.boot.Banner.Mode.OFF);
+        app.setLogStartupInfo(false);
+        System.exit(SpringApplication.exit(app.run(args)));
     }
 
     @Override

@@ -12,7 +12,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
+
 @Configuration
+@RegisterReflectionForBinding({AppConfig.class, AppConfig.OllamaConfig.class, AppConfig.OpenAIConfig.class, AppConfig.GoogleConfig.class})
 public class ConfigLoader {
     private static final Logger logger = LoggerFactory.getLogger(ConfigLoader.class);
     private static final String DEFAULT_CONFIG_FILE = "secai.yml";
