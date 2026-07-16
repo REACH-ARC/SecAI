@@ -43,6 +43,14 @@ SecAI orchestrates underlying scanners. They must be installed in your system `P
 
 *Note: If you run `secai` directly, the interactive dashboard will automatically tell you if these are missing and provide exact copy-paste installation commands for your OS.*
 
+### Troubleshooting: Windows PATH Limit
+If you try to manually add these scanners to your Windows Environment Variables and encounter a *"This environment variable is too large (2047 characters)"* error, you can easily bypass the GUI limit using PowerShell. Open PowerShell as an Administrator and run:
+
+```powershell
+[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";C:\Your\New\Folder\Path", [EnvironmentVariableTarget]::Machine)
+```
+*(Make sure to replace `C:\Your\New\Folder\Path` with the actual folder path containing the scanner executable).*
+
 ## Architecture
 
 ```mermaid
