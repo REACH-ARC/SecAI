@@ -109,10 +109,8 @@ public class SemgrepProvider implements ScannerProvider {
             Process process = pb.start();
             int exitCode = process.waitFor();
             return exitCode == 0;
-        } catch (IOException e) {
-            return false;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            logger.warn("Semgrep is not available: {}", e.getMessage());
             return false;
         }
     }
