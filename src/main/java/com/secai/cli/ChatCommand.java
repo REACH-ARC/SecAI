@@ -78,7 +78,7 @@ public class ChatCommand implements Callable<Integer> {
             
             System.out.println("AI is thinking...");
             String response = aiEngine.chat(history);
-            System.out.println("\nAI: " + response);
+            System.out.println("\nAI:\n" + com.secai.util.MarkdownRenderer.render(response) + "\n");
             
             history.add(new ChatMessage("assistant", response));
         }

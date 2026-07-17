@@ -79,9 +79,9 @@ public class FixCommand implements Callable<Integer> {
         aiEngine.analyzeFindings(List.of(finding));
         
         System.out.println("\n--- AI Remediation ---");
-        System.out.println(finding.getAiRemediation());
+        System.out.println(com.secai.util.MarkdownRenderer.render(finding.getAiRemediation()));
         System.out.println("\n--- Secure Code Example ---");
-        System.out.println(finding.getSecureCodeExample());
+        System.out.println(com.secai.util.MarkdownRenderer.render(finding.getSecureCodeExample()));
         
         if (finding.getSearchString() != null && finding.getReplaceString() != null) {
             System.out.println("\n--- Proposed Code Changes ---");
