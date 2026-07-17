@@ -84,6 +84,9 @@ public class ChatCommand implements Callable<Integer> {
                         "3. web_search\n" +
                         "   args: query\n" +
                         "   description: Searches the web.\n" + 
+                        "4. read_file\n" +
+                        "   args: path\n" +
+                        "   description: Reads the contents of a file to gain context.\n" +
                         "Only call ONE tool per response.";
 
                 String context = String.format("The user is asking questions about the following security finding:\n" +
@@ -107,24 +110,8 @@ public class ChatCommand implements Callable<Integer> {
                 StringBuilder contextBuilder = new StringBuilder();
                 contextBuilder.append("The user is asking questions about a recent security scan. The scan found the following issues:\n\n");
                 for (Finding f : findings) {
-                    String fileContent = "";
-                    if (f.getFile() != null && !f.getFile().isEmpty()) {
-                        try {
-                            java.nio.file.Path targetPath = java.nio.file.Paths.get(projectPath, f.getFile());
-                            if (java.nio.file.Files.exists(targetPath)) {
-                                fileContent = java.nio.file.Files.readString(targetPath);
-                            }
-                        } catch (Exception e) {
-                            // ignore
-                        }
-                    }
-                    contextBuilder.append(String.format("- ID %s: %s\n  Severity: %s\n  File: %s\n  Description: %s\n", 
+                    contextBuilder.append(String.format("- ID %s: %s\n  Severity: %s\n  File: %s\n  Description: %s\n\n", 
                             f.getId(), f.getTitle(), f.getSeverity(), f.getFile(), f.getDescription()));
-                    if (!fileContent.isEmpty()) {
-                        contextBuilder.append("  File Contents:\n```\n").append(fileContent).append("\n```\n\n");
-                    } else {
-                        contextBuilder.append("\n");
-                    }
                 }
                 
                 String toolInstructions = "\n\nTo call a tool, you MUST use this exact XML format in your response:\n" +
@@ -148,6 +135,9 @@ public class ChatCommand implements Callable<Integer> {
                         "3. web_search\n" +
                         "   args: query\n" +
                         "   description: Searches the web.\n" + 
+                        "4. read_file\n" +
+                        "   args: path\n" +
+                        "   description: Reads the contents of a file to gain context.\n" +
                         "Only call ONE tool per response.";
 
                 contextBuilder.append("IMPORTANT INSTRUCTION: You are acting as an expert Penetration Tester and Security Educator. ");
@@ -213,6 +203,12 @@ public class ChatCommand implements Callable<Integer> {
                         String query = extractXmlTag(argsXml, "query");
                         
                         toolResult = com.secai.ai.ToolExecutor.webSearch(query);
+                    } else if ("read_file".equals(toolName)) {
+                        String argsXml = extractXmlTag(toolCallXml, "args");
+                        String path = extractXmlTag(argsXml, "path");
+                        path = java.nio.file.Paths.get(projectPath, path).toString();
+                        
+                        toolResult = com.secai.ai.ToolExecutor.readFile(path);
                     } else {
                         toolResult = "Error: Unknown tool " + toolName;
                     }

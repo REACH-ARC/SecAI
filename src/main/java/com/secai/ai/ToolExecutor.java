@@ -112,4 +112,18 @@ public class ToolExecutor {
             return "Web search failed: " + e.getMessage();
         }
     }
+
+    public static String readFile(String targetPath) {
+        Path path = Paths.get(targetPath);
+        if (!Files.exists(path)) {
+            return "Error: File " + targetPath + " does not exist.";
+        }
+        System.out.println("\033[36m[AI reading file: " + targetPath + " ...]\033[0m");
+        try {
+            String content = Files.readString(path);
+            return "File Contents of " + targetPath + ":\n```\n" + content + "\n```";
+        } catch (IOException e) {
+            return "Error reading file: " + e.getMessage();
+        }
+    }
 }
