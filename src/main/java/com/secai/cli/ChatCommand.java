@@ -44,7 +44,46 @@ public class ChatCommand implements Callable<Integer> {
         
         if (findingId != null) {
             System.out.println("Loading finding [" + findingId + "] context for chat...");
-            List<Finding> findings = reportManager.loadLatestScan(projectPath);
+        } else {
+            System.out.println("Loading findings context for chat...");
+        }
+        
+        List<Finding> findings = reportManager.loadLatestScan(projectPath);
+        
+        String toolInstructions = "\n\nTo call a tool, you MUST use this exact XML format in your response:\n" +
+                "<tool_call>\n" +
+                "  <name>tool_name</name>\n" +
+                "  <args>\n" +
+                "    <file>value</file>\n" +
+                "    <search>value</search>\n" +
+                "    <replace>value</replace>\n" +
+                "    <path>value</path>\n" +
+                "    <query>value</query>\n" +
+                "    <id>value</id>\n" +
+                "  </args>\n" +
+                "</tool_call>\n" +
+                "Available tools:\n" +
+                "1. apply_patch\n" +
+                "   args: file, search, replace\n" +
+                "   description: Applies a code patch. 'search' must match EXACTLY the text in the file including whitespace.\n" +
+                "2. run_scan\n" +
+                "   args: path\n" +
+                "   description: Scans a directory for security vulnerabilities.\n" +
+                "3. web_search\n" +
+                "   args: query\n" +
+                "   description: Searches the web.\n" + 
+                "4. read_file\n" +
+                "   args: path\n" +
+                "   description: Reads the contents of a file to gain context.\n" +
+                "5. list_findings\n" +
+                "   args: none\n" +
+                "   description: Returns a summary list of all security findings from the latest scan.\n" +
+                "6. get_finding_details\n" +
+                "   args: id\n" +
+                "   description: Returns full description and details for a specific finding ID.\n" +
+                "Only call ONE tool per response.";
+
+        if (findingId != null) {
             Optional<Finding> findingOpt = findings.stream()
                     .filter(f -> f.getId().equals(findingId))
                     .findFirst();
@@ -62,32 +101,6 @@ public class ChatCommand implements Callable<Integer> {
                         System.out.println("Warning: Could not read context for file " + f.getFile());
                     }
                 }
-                
-                String toolInstructions = "\n\nTo call a tool, you MUST use this exact XML format in your response:\n" +
-                        "<tool_call>\n" +
-                        "  <name>tool_name</name>\n" +
-                        "  <args>\n" +
-                        "    <file>value</file>\n" +
-                        "    <search>value</search>\n" +
-                        "    <replace>value</replace>\n" +
-                        "    <path>value</path>\n" +
-                        "    <query>value</query>\n" +
-                        "  </args>\n" +
-                        "</tool_call>\n" +
-                        "Available tools:\n" +
-                        "1. apply_patch\n" +
-                        "   args: file, search, replace\n" +
-                        "   description: Applies a code patch. 'search' must match EXACTLY the text in the file including whitespace.\n" +
-                        "2. run_scan\n" +
-                        "   args: path\n" +
-                        "   description: Scans a directory for security vulnerabilities.\n" +
-                        "3. web_search\n" +
-                        "   args: query\n" +
-                        "   description: Searches the web.\n" + 
-                        "4. read_file\n" +
-                        "   args: path\n" +
-                        "   description: Reads the contents of a file to gain context.\n" +
-                        "Only call ONE tool per response.";
 
                 String context = String.format("The user is asking questions about the following security finding:\n" +
                         "Title: %s\nSeverity: %s\nFile: %s\nDescription: %s\n\n" +
@@ -104,49 +117,22 @@ public class ChatCommand implements Callable<Integer> {
                 return 1;
             }
         } else {
-            System.out.println("Loading all findings context for chat...");
-            List<Finding> findings = reportManager.loadLatestScan(projectPath);
             if (findings != null && !findings.isEmpty()) {
                 StringBuilder contextBuilder = new StringBuilder();
-                contextBuilder.append("The user is asking questions about a recent security scan. The scan found the following issues:\n\n");
-                for (Finding f : findings) {
-                    contextBuilder.append(String.format("- ID %s: %s\n  Severity: %s\n  File: %s\n  Description: %s\n\n", 
-                            f.getId(), f.getTitle(), f.getSeverity(), f.getFile(), f.getDescription()));
-                }
-                
-                String toolInstructions = "\n\nTo call a tool, you MUST use this exact XML format in your response:\n" +
-                        "<tool_call>\n" +
-                        "  <name>tool_name</name>\n" +
-                        "  <args>\n" +
-                        "    <file>value</file>\n" +
-                        "    <search>value</search>\n" +
-                        "    <replace>value</replace>\n" +
-                        "    <path>value</path>\n" +
-                        "    <query>value</query>\n" +
-                        "  </args>\n" +
-                        "</tool_call>\n" +
-                        "Available tools:\n" +
-                        "1. apply_patch\n" +
-                        "   args: file, search, replace\n" +
-                        "   description: Applies a code patch. 'search' must match EXACTLY the text in the file including whitespace.\n" +
-                        "2. run_scan\n" +
-                        "   args: path\n" +
-                        "   description: Scans a directory for security vulnerabilities.\n" +
-                        "3. web_search\n" +
-                        "   args: query\n" +
-                        "   description: Searches the web.\n" + 
-                        "4. read_file\n" +
-                        "   args: path\n" +
-                        "   description: Reads the contents of a file to gain context.\n" +
-                        "Only call ONE tool per response.";
+                contextBuilder.append("The user is asking questions about a recent security scan. The scan found ")
+                              .append(findings.size())
+                              .append(" issues.\n\n");
 
                 contextBuilder.append("IMPORTANT INSTRUCTION: You are acting as an expert Penetration Tester and Security Educator. ");
                 contextBuilder.append("The user has explicitly authorized you to explain exactly how these vulnerabilities work and how to verify them. ");
-                contextBuilder.append("When the user asks about an issue by its ID, reference the specific finding above and provide concrete steps to exploit/verify it.");
+                contextBuilder.append("When the user asks about an issue by its ID, use the get_finding_details tool to fetch it, and provide concrete steps to exploit/verify it.");
                 contextBuilder.append(toolInstructions);
                 
                 history.add(new ChatMessage("system", contextBuilder.toString()));
                 System.out.println("Context loaded. You can ask questions about any of the findings (e.g., 'issue ID 1').");
+            } else {
+                System.out.println("No findings available from latest scan. Proceeding with empty context.");
+                history.add(new ChatMessage("system", "No recent scan findings available." + toolInstructions));
             }
         }
         
@@ -209,6 +195,40 @@ public class ChatCommand implements Callable<Integer> {
                         path = java.nio.file.Paths.get(projectPath, path).toString();
                         
                         toolResult = com.secai.ai.ToolExecutor.readFile(path);
+                    } else if ("list_findings".equals(toolName)) {
+                        System.out.println("\033[36m[AI fetching finding list...]\033[0m");
+                        if (findings == null || findings.isEmpty()) {
+                            toolResult = "No findings available.";
+                        } else {
+                            StringBuilder sb = new StringBuilder("Scan Findings Summary:\n");
+                            for (Finding f : findings) {
+                                sb.append("- ID: ").append(f.getId())
+                                  .append(" | Severity: ").append(f.getSeverity())
+                                  .append(" | Title: ").append(f.getTitle())
+                                  .append(" | File: ").append(f.getFile())
+                                  .append("\n");
+                            }
+                            toolResult = sb.toString();
+                        }
+                    } else if ("get_finding_details".equals(toolName)) {
+                        String argsXml = extractXmlTag(toolCallXml, "args");
+                        String targetId = extractXmlTag(argsXml, "id");
+                        System.out.println("\033[36m[AI fetching details for finding ID " + targetId + "...]\033[0m");
+                        
+                        Optional<Finding> findingOpt = findings.stream()
+                                .filter(f -> f.getId().equals(targetId))
+                                .findFirst();
+                                
+                        if (findingOpt.isPresent()) {
+                            Finding f = findingOpt.get();
+                            toolResult = "Finding ID: " + f.getId() + "\n" +
+                                         "Severity: " + f.getSeverity() + "\n" +
+                                         "Title: " + f.getTitle() + "\n" +
+                                         "File: " + f.getFile() + "\n" +
+                                         "Description: " + f.getDescription() + "\n";
+                        } else {
+                            toolResult = "Error: Finding with ID " + targetId + " not found.";
+                        }
                     } else {
                         toolResult = "Error: Unknown tool " + toolName;
                     }
