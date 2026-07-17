@@ -44,7 +44,7 @@ public class MarkdownRenderer {
             String block = matcher.group(2);
             // Save as an array: language + code
             codeBlocks.add(language + "|||" + block);
-            matcher.appendReplacement(sb, "___CODE_BLOCK_" + blockIndex + "___");
+            matcher.appendReplacement(sb, "@@@CODE_BLOCK_" + blockIndex + "@@@");
             blockIndex++;
         }
         matcher.appendTail(sb);
@@ -84,7 +84,7 @@ public class MarkdownRenderer {
             }
             formattedBlock.append(CODE_COLOR).append("╰").append("─".repeat(44)).append(RESET).append("\n");
             
-            text = text.replace("___CODE_BLOCK_" + i + "___", formattedBlock.toString());
+            text = text.replace("@@@CODE_BLOCK_" + i + "@@@", formattedBlock.toString());
         }
 
         return text;
