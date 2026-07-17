@@ -81,6 +81,15 @@ public class ChatCommand implements Callable<Integer> {
                 "6. get_finding_details\n" +
                 "   args: id\n" +
                 "   description: Returns full description and details for a specific finding ID.\n" +
+                "7. run_command\n" +
+                "   args: command\n" +
+                "   description: Runs a terminal command in the project path (e.g., to start the app like 'mvn spring-boot:run'). Note: Requires user approval.\n" +
+                "8. kill_command\n" +
+                "   args: pid\n" +
+                "   description: Kills a background process started by run_command.\n" +
+                "9. http_request\n" +
+                "   args: url, method, headers, body\n" +
+                "   description: Sends an HTTP request to test running applications.\n" +
                 "Only call ONE tool per response.";
 
         if (findingId != null) {
@@ -229,6 +238,21 @@ public class ChatCommand implements Callable<Integer> {
                         } else {
                             toolResult = "Error: Finding with ID " + targetId + " not found.";
                         }
+                    } else if ("run_command".equals(toolName)) {
+                        String argsXml = extractXmlTag(toolCallXml, "args");
+                        String command = extractXmlTag(argsXml, "command");
+                        toolResult = com.secai.ai.ToolExecutor.runCommand(command, projectPath, scanner);
+                    } else if ("kill_command".equals(toolName)) {
+                        String argsXml = extractXmlTag(toolCallXml, "args");
+                        String pid = extractXmlTag(argsXml, "pid");
+                        toolResult = com.secai.ai.ToolExecutor.killCommand(pid);
+                    } else if ("http_request".equals(toolName)) {
+                        String argsXml = extractXmlTag(toolCallXml, "args");
+                        String url = extractXmlTag(argsXml, "url");
+                        String method = extractXmlTag(argsXml, "method");
+                        String headers = extractXmlTag(argsXml, "headers");
+                        String body = extractXmlTag(argsXml, "body");
+                        toolResult = com.secai.ai.ToolExecutor.httpRequest(url, method, headers, body);
                     } else {
                         toolResult = "Error: Unknown tool " + toolName;
                     }

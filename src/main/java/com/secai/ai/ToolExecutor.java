@@ -126,4 +126,96 @@ public class ToolExecutor {
             return "Error reading file: " + e.getMessage();
         }
     }
+
+    public static String runCommand(String command, String projectPath, Scanner scanner) {
+        System.out.print("\033[36mAllow AI to run: '" + command + "'? [y/N]: \033[0m");
+        String answer = scanner.nextLine().trim().toLowerCase();
+        if (!answer.equals("y") && !answer.equals("yes")) {
+            System.out.println("\033[31mCommand rejected.\033[0m");
+            return "User rejected the command.";
+        }
+
+        System.out.println("\033[36m[AI running command: " + command + " ...]\033[0m");
+        try {
+            boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+            ProcessBuilder pb = new ProcessBuilder();
+            if (isWindows) {
+                pb.command("cmd.exe", "/c", command);
+            } else {
+                pb.command("sh", "-c", command);
+            }
+            pb.directory(new java.io.File(projectPath));
+            
+            Path logPath = Paths.get(projectPath, "secai-run.log");
+            pb.redirectOutput(logPath.toFile());
+            pb.redirectError(logPath.toFile());
+            
+            Process process = pb.start();
+            
+            boolean finished = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
+            if (finished) {
+                int exitCode = process.exitValue();
+                String output = Files.readString(logPath);
+                return "Command exited with code " + exitCode + ". Output:\n" + output;
+            } else {
+                long pid = process.pid();
+                return "Command started in background with PID " + pid + " and is still running. Logs are written to secai-run.log.";
+            }
+        } catch (Exception e) {
+            return "Error executing command: " + e.getMessage();
+        }
+    }
+
+    public static String killCommand(String pidStr) {
+        System.out.println("\033[36m[AI killing process: " + pidStr + " ...]\033[0m");
+        try {
+            long pid = Long.parseLong(pidStr);
+            ProcessHandle.of(pid).ifPresent(ProcessHandle::destroyForcibly);
+            return "Process " + pid + " killed successfully.";
+        } catch (NumberFormatException e) {
+            return "Error: Invalid PID format.";
+        }
+    }
+
+    public static String httpRequest(String url, String method, String headers, String body) {
+        System.out.println("\033[36m[AI sending HTTP " + method + " to " + url + " ...]\033[0m");
+        try {
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(URI.create(url));
+            
+            if (headers != null && !headers.isEmpty()) {
+                String[] headerLines = headers.split("\n");
+                for (String line : headerLines) {
+                    String[] parts = line.split(":", 2);
+                    if (parts.length == 2) {
+                        builder.header(parts[0].trim(), parts[1].trim());
+                    }
+                }
+            }
+            
+            HttpRequest.BodyPublisher bodyPublisher = (body != null && !body.isEmpty()) 
+                    ? HttpRequest.BodyPublishers.ofString(body) 
+                    : HttpRequest.BodyPublishers.noBody();
+                    
+            switch(method.toUpperCase()) {
+                case "POST": builder.POST(bodyPublisher); break;
+                case "PUT": builder.PUT(bodyPublisher); break;
+                case "DELETE": builder.DELETE(); break;
+                case "PATCH": builder.method("PATCH", bodyPublisher); break;
+                default: builder.GET(); break;
+            }
+            
+            HttpResponse<String> response = HttpClient.newHttpClient().send(builder.build(), HttpResponse.BodyHandlers.ofString());
+            
+            StringBuilder result = new StringBuilder();
+            result.append("Status: ").append(response.statusCode()).append("\n");
+            result.append("Headers:\n");
+            response.headers().map().forEach((k, v) -> result.append(k).append(": ").append(String.join(", ", v)).append("\n"));
+            result.append("Body:\n").append(response.body());
+            
+            return result.toString();
+        } catch (Exception e) {
+            return "HTTP request failed: " + e.getMessage();
+        }
+    }
 }
