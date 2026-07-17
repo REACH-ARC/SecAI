@@ -9,7 +9,7 @@ public class DiffRenderer {
     private static final String HEADER_COLOR = "\033[38;2;150;150;150m";
 
     public static void printDiff(String filePath, String searchString, String replaceString) {
-        System.out.println("\n" + HEADER_COLOR + "╭─ Patching: " + filePath + RESET);
+        System.out.println("\n" + HEADER_COLOR + "+- Patching: " + filePath + RESET);
         
         String[] searchLines = searchString.split("\n", -1);
         String[] replaceLines = replaceString.split("\n", -1);
@@ -28,7 +28,7 @@ public class DiffRenderer {
             }
         }
         
-        System.out.println(HEADER_COLOR + "╰" + "─".repeat(50) + RESET + "\n");
+        System.out.println(HEADER_COLOR + "+" + "-".repeat(50) + RESET + "\n");
     }
 
     private static String padRight(String s, int n) {

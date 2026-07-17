@@ -76,13 +76,13 @@ public class MarkdownRenderer {
             String block = parts.length > 1 ? parts[1] : "";
             
             StringBuilder formattedBlock = new StringBuilder();
-            formattedBlock.append("\n").append(CODE_COLOR).append("╭─ ").append(language.isEmpty() ? "code" : language).append(" ").append("─".repeat(Math.max(2, 40 - language.length()))).append(RESET).append("\n");
+            formattedBlock.append("\n").append(CODE_COLOR).append("+- ").append(language.isEmpty() ? "code" : language).append(" ").append("-".repeat(Math.max(2, 40 - language.length()))).append(RESET).append("\n");
             
             String[] lines = block.split("\n");
             for (String line : lines) {
-                formattedBlock.append(CODE_COLOR).append("│ ").append(RESET).append(BLOCK_TEXT_COLOR).append(line).append(RESET).append("\n");
+                formattedBlock.append(CODE_COLOR).append("| ").append(RESET).append(BLOCK_TEXT_COLOR).append(line).append(RESET).append("\n");
             }
-            formattedBlock.append(CODE_COLOR).append("╰").append("─".repeat(44)).append(RESET).append("\n");
+            formattedBlock.append(CODE_COLOR).append("+").append("-".repeat(44)).append(RESET).append("\n");
             
             text = text.replace("@@@CODE_BLOCK_" + i + "@@@", formattedBlock.toString());
         }
