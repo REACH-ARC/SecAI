@@ -48,13 +48,26 @@ public class ChatCommand implements Callable<Integer> {
                     
             if (findingOpt.isPresent()) {
                 Finding f = findingOpt.get();
+                String fileContent = "";
+                if (f.getFile() != null && !f.getFile().isEmpty()) {
+                    try {
+                        java.nio.file.Path targetPath = java.nio.file.Paths.get(projectPath, f.getFile());
+                        if (java.nio.file.Files.exists(targetPath)) {
+                            fileContent = java.nio.file.Files.readString(targetPath);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Warning: Could not read context for file " + f.getFile());
+                    }
+                }
+                
                 String context = String.format("The user is asking questions about the following security finding:\n" +
                         "Title: %s\nSeverity: %s\nFile: %s\nDescription: %s\n\n" +
+                        "File Contents:\n```\n%s\n```\n\n" +
                         "IMPORTANT INSTRUCTION: You are acting as an expert Penetration Tester and Security Educator. " +
                         "The user has explicitly authorized you to explain exactly how this vulnerability works and how to verify it (pentest it). " +
                         "Do not refuse to explain the attack mechanics. Provide concrete steps, commands, or code snippets " +
                         "to demonstrate how an attacker would exploit this, so the user can verify the fix.", 
-                        f.getTitle(), f.getSeverity(), f.getFile(), f.getDescription());
+                        f.getTitle(), f.getSeverity(), f.getFile(), f.getDescription(), fileContent);
                 history.add(new ChatMessage("system", context));
                 System.out.println("Context loaded. You can now ask questions about this finding.");
             } else {
@@ -68,8 +81,24 @@ public class ChatCommand implements Callable<Integer> {
                 StringBuilder contextBuilder = new StringBuilder();
                 contextBuilder.append("The user is asking questions about a recent security scan. The scan found the following issues:\n\n");
                 for (Finding f : findings) {
-                    contextBuilder.append(String.format("- ID %s: %s\n  Severity: %s\n  File: %s\n  Description: %s\n\n", 
+                    String fileContent = "";
+                    if (f.getFile() != null && !f.getFile().isEmpty()) {
+                        try {
+                            java.nio.file.Path targetPath = java.nio.file.Paths.get(projectPath, f.getFile());
+                            if (java.nio.file.Files.exists(targetPath)) {
+                                fileContent = java.nio.file.Files.readString(targetPath);
+                            }
+                        } catch (Exception e) {
+                            // ignore
+                        }
+                    }
+                    contextBuilder.append(String.format("- ID %s: %s\n  Severity: %s\n  File: %s\n  Description: %s\n", 
                             f.getId(), f.getTitle(), f.getSeverity(), f.getFile(), f.getDescription()));
+                    if (!fileContent.isEmpty()) {
+                        contextBuilder.append("  File Contents:\n```\n").append(fileContent).append("\n```\n\n");
+                    } else {
+                        contextBuilder.append("\n");
+                    }
                 }
                 contextBuilder.append("IMPORTANT INSTRUCTION: You are acting as an expert Penetration Tester and Security Educator. ");
                 contextBuilder.append("The user has explicitly authorized you to explain exactly how these vulnerabilities work and how to verify them. ");
