@@ -23,6 +23,15 @@ public class MarkdownRenderer {
             return markdown;
         }
 
+        // Sanitize typographic quotes and symbols for Windows terminal compatibility
+        markdown = markdown.replace("’", "'")
+                           .replace("‘", "'")
+                           .replace("“", "\"")
+                           .replace("”", "\"")
+                           .replace("…", "...")
+                           .replace("—", "--")
+                           .replace("–", "-");
+
         // 1. Extract code blocks so we don't format inside them
         List<String> codeBlocks = new ArrayList<>();
         Pattern codeBlockPattern = Pattern.compile("```(.*?)\\n(.*?)\\n```", Pattern.DOTALL);
