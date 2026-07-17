@@ -22,7 +22,20 @@ public class ConfigLoader {
 
     @Bean
     public AppConfig appConfig() {
-        return loadConfig(Paths.get(System.getProperty("user.dir"), DEFAULT_CONFIG_FILE).toFile());
+        File localConfig = Paths.get(System.getProperty("user.dir"), DEFAULT_CONFIG_FILE).toFile();
+        if (localConfig.exists() && localConfig.length() > 0) {
+            logger.info("Using local project configuration: {}", localConfig.getAbsolutePath());
+            return loadConfig(localConfig);
+        }
+        
+        File globalConfig = Paths.get(System.getProperty("user.home"), ".secai", DEFAULT_CONFIG_FILE).toFile();
+        if (globalConfig.exists() && globalConfig.length() > 0) {
+            logger.info("Using global user configuration: {}", globalConfig.getAbsolutePath());
+            return loadConfig(globalConfig);
+        }
+        
+        logger.debug("No local or global configuration found. Falling back to defaults.");
+        return loadConfig(localConfig);
     }
 
     public AppConfig loadConfig(File configFile) {

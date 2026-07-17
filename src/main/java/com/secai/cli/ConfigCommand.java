@@ -29,12 +29,24 @@ public class ConfigCommand implements Callable<Integer> {
     @Option(names = {"--url"}, description = "Set the URL (mainly for ollama)")
     private String url;
 
+    @Option(names = {"--local"}, description = "Save to local project directory instead of global user directory")
+    private boolean local;
+
     @Autowired
     private org.springframework.beans.factory.ObjectProvider<SecAiCommand> secAiCommandProvider;
 
     @Override
     public Integer call() {
-        File configFile = Paths.get(System.getProperty("user.dir"), "secai.yml").toFile();
+        File configFile;
+        if (local) {
+            configFile = Paths.get(System.getProperty("user.dir"), "secai.yml").toFile();
+        } else {
+            File globalDir = Paths.get(System.getProperty("user.home"), ".secai").toFile();
+            if (!globalDir.exists()) {
+                globalDir.mkdirs();
+            }
+            configFile = new File(globalDir, "secai.yml");
+        }
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         AppConfig config = new AppConfig();
 
