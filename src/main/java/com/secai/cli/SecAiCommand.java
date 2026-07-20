@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.secai.scanner.ScannerEngine;
 import com.secai.scanner.ScannerProvider;
 import com.secai.config.AppConfig;
+import com.secai.util.CommandParserUtils;
 
 @Component
 @Command(
@@ -36,6 +37,11 @@ public class SecAiCommand implements Callable<Integer> {
 
     @Autowired
     private AppConfig appConfig;
+
+    @Autowired
+    private CommandLine.IFactory factory;
+
+    private boolean inRepl = false;
 
     @Option(names = {"-v", "--verbose"}, description = "Enable verbose output")
     public boolean verbose;
@@ -70,6 +76,13 @@ public class SecAiCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
+        if (inRepl) {
+            System.out.println("Already in interactive mode.");
+            return 0;
+        }
+        
+        inRepl = true;
+
         System.out.println("""
                  _____           _    ___ 
                 /  ___|         / \\  |_ _|
@@ -136,6 +149,31 @@ public class SecAiCommand implements Callable<Integer> {
         System.out.println("  secai update         - Update scanner rules and definitions");
         System.out.println("\nRun 'secai --help' for a full list of options.");
 
+        java.util.Scanner scanner = new java.util.Scanner(System.in);
+        while (true) {
+            System.out.print("\n> ");
+            if (!scanner.hasNextLine()) break;
+            
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) continue;
+            
+            if (input.equalsIgnoreCase("exit") || input.equalsIgnoreCase("quit") || 
+                input.equalsIgnoreCase("/exit") || input.equalsIgnoreCase("/quit")) {
+                break;
+            }
+            
+            // Remove optional leading slash
+            if (input.startsWith("/")) {
+                input = input.substring(1);
+            }
+            
+            String[] argsArray = CommandParserUtils.parseArgs(input);
+            if (argsArray.length > 0) {
+                new CommandLine(this, factory).execute(argsArray);
+            }
+        }
+        
+        inRepl = false;
         return 0;
     }
 }
