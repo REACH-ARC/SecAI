@@ -73,6 +73,7 @@ public class AIEngine {
         for (Finding finding : findings) {
             try {
                 activeProvider.analyzeFinding(finding);
+                sanitizeFinding(finding);
                 logger.debug("Successfully analyzed finding: {}", finding.getTitle());
             } catch (Exception e) {
                 logger.error("Failed to analyze finding {}: {}", finding.getTitle(), e.getMessage());
@@ -85,6 +86,30 @@ public class AIEngine {
         if (activeProvider == null) {
             return "Error: No AI provider configured.";
         }
-        return activeProvider.chat(history);
+        return sanitizeOutput(activeProvider.chat(history));
+    }
+
+    private void sanitizeFinding(Finding finding) {
+        if (finding.getAiExplanation() != null) finding.setAiExplanation(sanitizeOutput(finding.getAiExplanation()));
+        if (finding.getAiRemediation() != null) finding.setAiRemediation(sanitizeOutput(finding.getAiRemediation()));
+        if (finding.getAttackScenario() != null) finding.setAttackScenario(sanitizeOutput(finding.getAttackScenario()));
+    }
+
+    private String sanitizeOutput(String input) {
+        if (input == null) return null;
+        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+        if (!isWindows) return input;
+
+        return input.replace("\u2011", "-") // non-breaking hyphen
+                    .replace("\u2012", "-") // figure dash
+                    .replace("\u2013", "-") // en dash
+                    .replace("\u2014", "-") // em dash
+                    .replace("\u2018", "'") // left single quote
+                    .replace("\u2019", "'") // right single quote
+                    .replace("\u201C", "\"") // left double quote
+                    .replace("\u201D", "\"") // right double quote
+                    .replace("\u2026", "...") // ellipsis
+                    .replace("\u202F", " ") // narrow no-break space
+                    .replace("\u00A0", " "); // no-break space
     }
 }
