@@ -93,6 +93,15 @@ public class ConfigCommand implements Callable<Integer> {
         try {
             mapper.writeValue(configFile, config);
             System.out.println("Configuration saved to " + configFile.getAbsolutePath());
+            
+            if (!local) {
+                File localConfig = Paths.get(System.getProperty("user.dir"), "secai.yml").toFile();
+                if (localConfig.exists() && localConfig.length() > 0) {
+                    System.out.println("\n\033[33m[WARNING] A local secai.yml exists in the current directory:");
+                    System.out.println(localConfig.getAbsolutePath());
+                    System.out.println("This local file will override the global configuration you just saved!\033[0m");
+                }
+            }
         } catch (IOException e) {
             System.out.println("Error writing config file: " + e.getMessage());
             return 1;
