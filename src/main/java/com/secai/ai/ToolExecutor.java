@@ -156,6 +156,11 @@ public class ToolExecutor {
             if (finished) {
                 int exitCode = process.exitValue();
                 String output = Files.readString(logPath);
+                
+                System.out.println("\n\033[33m--- Command Output ---\033[0m");
+                System.out.println(output.trim().isEmpty() ? "(No output)" : output.trim());
+                System.out.println("\033[33m----------------------\033[0m\n");
+                
                 return "Command exited with code " + exitCode + ". Output:\n" + output;
             } else {
                 long pid = process.pid();
@@ -258,6 +263,11 @@ public class ToolExecutor {
             if (finished) {
                 int exitCode = process.exitValue();
                 String output = Files.readString(logPath);
+                
+                System.out.println("\n\033[33m--- Command Output ---\033[0m");
+                System.out.println(output.trim().isEmpty() ? "(No output)" : output.trim());
+                System.out.println("\033[33m----------------------\033[0m\n");
+                
                 return "Sandboxed command exited with code " + exitCode + ". Output:\n" + output;
             } else {
                 process.destroyForcibly();
