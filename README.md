@@ -19,18 +19,18 @@ SecAI distributes pre-compiled native binaries using GraalVM. You do **not** nee
 
 **Linux & macOS:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/REACH-ARC/SecAI/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/SecAI-Cam/SecAI/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/REACH-ARC/SecAI/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/SecAI-Cam/SecAI/main/install.ps1 | iex
 ```
 
 ### Option 2: Clone & Run (For Development)
 If you want to run it from source, ensure you have Java 21+ installed.
 ```bash
-git clone https://github.com/REACH-ARC/SecAI.git
+git clone https://github.com/SecAI-Cam/SecAI.git
 cd SecAI
 ./mvnw clean package -DskipTests
 java -jar target/secai-0.0.1-SNAPSHOT.jar

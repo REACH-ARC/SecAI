@@ -3,7 +3,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$Repo = "REACH-ARC/SecAI"
+$Repo = "SecAI-Cam/SecAI"
 $BinaryName = "secai.exe"
 $InstallDir = "$env:USERPROFILE\secai\bin"
 

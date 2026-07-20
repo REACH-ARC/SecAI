@@ -4,7 +4,7 @@ set -e
 # SecAI Installation Script for Linux & macOS
 # Usage: curl -sSL https://raw.githubusercontent.com/<YOUR_GITHUB_USERNAME>/secai/main/install.sh | bash
 
-REPO="REACH-ARC/SecAI"
+REPO="SecAI-Cam/SecAI"
 BINARY_NAME="secai"
 INSTALL_DIR="/usr/local/bin"
 
