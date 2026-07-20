@@ -19,6 +19,13 @@ import java.util.regex.Pattern;
 
 public class ToolExecutor {
 
+    private static String truncate(String text, int maxLength) {
+        if (text == null || text.length() <= maxLength) {
+            return text;
+        }
+        return text.substring(0, maxLength) + "\n\n...[TRUNCATED: Output exceeded " + maxLength + " characters]...";
+    }
+
     private static boolean askConfirmation(String promptText, Scanner scanner) {
         while (true) {
             System.out.print(promptText);
@@ -133,7 +140,7 @@ public class ToolExecutor {
         System.out.println("\033[36m[AI reading file: " + targetPath + " ...]\033[0m");
         try {
             String content = Files.readString(path);
-            return "File Contents of " + targetPath + ":\n```\n" + content + "\n```";
+            return "File Contents of " + targetPath + ":\n```\n" + truncate(content, 20000) + "\n```";
         } catch (IOException e) {
             return "Error reading file: " + e.getMessage();
         }
@@ -166,7 +173,7 @@ public class ToolExecutor {
             boolean finished = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
             if (finished) {
                 int exitCode = process.exitValue();
-                String output = Files.readString(logPath);
+                String output = truncate(Files.readString(logPath), 20000);
                 
                 System.out.println("\n\033[33m--- Command Output ---\033[0m");
                 System.out.println(output.trim().isEmpty() ? "(No output)" : output.trim());
@@ -227,7 +234,7 @@ public class ToolExecutor {
             result.append("Status: ").append(response.statusCode()).append("\n");
             result.append("Headers:\n");
             response.headers().map().forEach((k, v) -> result.append(k).append(": ").append(String.join(", ", v)).append("\n"));
-            result.append("Body:\n").append(response.body());
+            result.append("Body:\n").append(truncate(response.body(), 20000));
             
             return result.toString();
         } catch (Exception e) {
@@ -272,7 +279,7 @@ public class ToolExecutor {
             boolean finished = process.waitFor(30, java.util.concurrent.TimeUnit.SECONDS);
             if (finished) {
                 int exitCode = process.exitValue();
-                String output = Files.readString(logPath);
+                String output = truncate(Files.readString(logPath), 20000);
                 
                 System.out.println("\n\033[33m--- Command Output ---\033[0m");
                 System.out.println(output.trim().isEmpty() ? "(No output)" : output.trim());
