@@ -19,6 +19,19 @@ import java.util.regex.Pattern;
 
 public class ToolExecutor {
 
+    private static boolean askConfirmation(String promptText, Scanner scanner) {
+        while (true) {
+            System.out.print(promptText);
+            String answer = scanner.nextLine().trim().toLowerCase();
+            if (answer.equals("y") || answer.equals("yes")) {
+                return true;
+            } else if (answer.equals("n") || answer.equals("no") || answer.isEmpty()) {
+                return false;
+            }
+            System.out.println("Invalid input. Please enter 'y' or 'n' (default is 'n').");
+        }
+    }
+
     public static String applyPatch(String filePath, String search, String replace, Scanner scanner) {
         Path path = Paths.get(filePath);
         if (!Files.exists(path)) {
@@ -38,10 +51,9 @@ public class ToolExecutor {
             }
 
             DiffRenderer.printDiff(filePath, normalizedSearch, normalizedReplace);
-            System.out.print("\033[36mApply this patch to " + filePath + "? [y/N]: \033[0m");
-            String answer = scanner.nextLine().trim().toLowerCase();
+            boolean confirmed = askConfirmation("\033[36mApply this patch to " + filePath + "? [y/N]: \033[0m", scanner);
 
-            if (answer.equals("y") || answer.equals("yes")) {
+            if (confirmed) {
                 String newContent = normalizedContent.replace(normalizedSearch, normalizedReplace);
                 Files.writeString(path, newContent);
                 System.out.println("\033[32mPatch applied successfully.\033[0m");
@@ -128,9 +140,8 @@ public class ToolExecutor {
     }
 
     public static String runCommand(String command, String projectPath, Scanner scanner) {
-        System.out.print("\033[36mAllow AI to run: '" + command + "'? [y/N]: \033[0m");
-        String answer = scanner.nextLine().trim().toLowerCase();
-        if (!answer.equals("y") && !answer.equals("yes")) {
+        boolean confirmed = askConfirmation("\033[36mAllow AI to run: '" + command + "'? [y/N]: \033[0m", scanner);
+        if (!confirmed) {
             System.out.println("\033[31mCommand rejected.\033[0m");
             return "User rejected the command.";
         }
@@ -225,9 +236,8 @@ public class ToolExecutor {
     }
 
     public static String runSandboxed(String command, String projectPath, Scanner scanner) {
-        System.out.print("\033[36mAllow AI to run SANDBOXED command (Docker): '" + command + "'? [y/N]: \033[0m");
-        String answer = scanner.nextLine().trim().toLowerCase();
-        if (!answer.equals("y") && !answer.equals("yes")) {
+        boolean confirmed = askConfirmation("\033[36mAllow AI to run SANDBOXED command (Docker): '" + command + "'? [y/N]: \033[0m", scanner);
+        if (!confirmed) {
             System.out.println("\033[31mCommand rejected.\033[0m");
             return "User rejected the sandboxed command.";
         }
