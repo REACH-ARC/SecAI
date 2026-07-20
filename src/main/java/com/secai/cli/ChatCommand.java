@@ -105,7 +105,7 @@ public class ChatCommand implements Callable<Integer> {
                 String fileContent = "";
                 if (f.getFile() != null && !f.getFile().isEmpty()) {
                     try {
-                        java.nio.file.Path targetPath = java.nio.file.Paths.get(projectPath, f.getFile());
+                        java.nio.file.Path targetPath = java.nio.file.Paths.get(projectPath).resolve(f.getFile());
                         if (java.nio.file.Files.exists(targetPath)) {
                             fileContent = java.nio.file.Files.readString(targetPath);
                         }
@@ -189,12 +189,12 @@ public class ChatCommand implements Callable<Integer> {
                         String search = extractArg(toolCallXml, "search");
                         String replace = extractArg(toolCallXml, "replace");
                         
-                        file = java.nio.file.Paths.get(projectPath, file).toString();
+                        file = java.nio.file.Paths.get(projectPath).resolve(file).toString();
                         toolResult = com.secai.ai.ToolExecutor.applyPatch(file, search, replace, scanner);
                         
                     } else if ("run_scan".equals(toolName)) {
                         String path = extractArg(toolCallXml, "path");
-                        path = java.nio.file.Paths.get(projectPath, path).toString();
+                        path = java.nio.file.Paths.get(projectPath).resolve(path).toString();
                         
                         toolResult = com.secai.ai.ToolExecutor.runScan(path, scanners);
                         
@@ -204,7 +204,7 @@ public class ChatCommand implements Callable<Integer> {
                         toolResult = com.secai.ai.ToolExecutor.webSearch(query);
                     } else if ("read_file".equals(toolName)) {
                         String path = extractArg(toolCallXml, "path");
-                        path = java.nio.file.Paths.get(projectPath, path).toString();
+                        path = java.nio.file.Paths.get(projectPath).resolve(path).toString();
                         
                         toolResult = com.secai.ai.ToolExecutor.readFile(path);
                     } else if ("list_findings".equals(toolName)) {
